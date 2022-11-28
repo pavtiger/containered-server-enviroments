@@ -13,6 +13,7 @@ RUN apt update && apt install openssh-server vim git htop python3 python3-pip ip
 RUN git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
 COPY .p10k.zsh /home/.p10k.zsh
 COPY .zshrc /home/.zshrc
+COPY .oh-my-zsh /home/.oh-my-zsh
 
 RUN echo "PermitRootLogin no" >> /etc/ssh/sshd_config
 
