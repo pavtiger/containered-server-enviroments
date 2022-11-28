@@ -4,6 +4,7 @@ import os
 import random
 import string
 import time
+import subprocess
 
 
 GENERATE_PASSWORDS = False
@@ -25,7 +26,8 @@ for index, row in df.iterrows():
 
     username = row['username']
     start, end = (index + 1) * 1000 + 1, (index + 1) * 1000 + 999
-    cmd = f"sudo docker run --name {username} --memory=20g --pids-limit 5000 --kernel-memory=20g --cpus=1 -d -p {(index + 1) * 1000}:22 -v /home/dockers/{username}:/home/{username} -p {start}-{end}:{start}-{end} template_ubuntu"
+    # cmd = f"sudo docker run --name {username} --memory=20g --pids-limit 5000 -d -p {(index + 1) * 1000}:22 -v /home/dockers/{username}:/home/{username} -p {start}-{end}:{start}-{end}/udp template_ubuntu"
+    cmd = f"sudo docker run --name {username} --memory=20g --pids-limit 5000 -d -p {(index + 1) * 1000}:22 -v /home/dockers/{username}:/home/{username} template_ubuntu"
     print(cmd, default_password)
     os.system(cmd)
 
@@ -43,9 +45,21 @@ for index, row in df.iterrows():
     for command in commands:
         os.system(command)
     
+    docker_ip = f"172.17.0.{2 + index}"
+    print(docker_ip)
+
+    networking_commands = [
+        f"iptables -A DOCKER -t nat -p tcp -m tcp ! -i docker0 --dport 1001:1999 -j DNAT --to-destination {docker_ip}:{start}-{end}",
+        f"iptables -A DOCKER -p tcp -m tcp -d {docker_ip}/32 ! -i docker0 -o docker0 --dport {start}:{end} -j ACCEPT",
+        f"iptables -A POSTROUTING -t nat -p tcp -m tcp -s {docker_ip}/32 -d {docker_ip}/32 --dport {start}:{end} -j MASQUERADE"
+    ]
+
+    for command in networking_commands:
+        os.system(command)
+
     df.loc[index,'default_password'] = default_password
     
-    time.sleep(600)
+    time.sleep(1)
 
 df.to_csv('users_with_passwords.csv')
 
