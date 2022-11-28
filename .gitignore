@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 users_with_passwords.csv
+.oh-my-zsh

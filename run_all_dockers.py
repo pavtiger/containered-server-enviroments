@@ -46,21 +46,7 @@ for index, row in df.iterrows():
     for command in commands:
         os.system(command)
     
-    docker_ip = f"172.17.0.{2 + index}"
-    print(docker_ip)
-
-    networking_commands = [
-        f"iptables -A DOCKER -t nat -p tcp -m tcp ! -i docker0 --dport {start}:{end} -j DNAT --to-destination {docker_ip}:{start}-{end}",
-        f"iptables -A DOCKER -p tcp -m tcp -d {docker_ip}/32 ! -i docker0 -o docker0 --dport {start}:{end} -j ACCEPT",
-        f"iptables -A POSTROUTING -t nat -p tcp -m tcp -s {docker_ip}/32 -d {docker_ip}/32 --dport {start}:{end} -j MASQUERADE"
-    ]
-
-    for command in networking_commands:
-        os.system(command)
-
     df.loc[index,'default_password'] = default_password
-    
-    time.sleep(1)
 
 df.to_csv('users_with_passwords.csv')
 
