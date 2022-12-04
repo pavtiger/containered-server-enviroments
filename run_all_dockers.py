@@ -1,17 +1,14 @@
 import pandas as pd
-import numpy as np
 import os
 import random
 import string
-import time
-import subprocess
 
 
 GENERATE_PASSWORDS = False
 
 
 def get_random_string(length):
-    # choose from all lowercase letter
+    # Choose from all lowercase letters
     letters = string.ascii_lowercase
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
