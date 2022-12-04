@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 import pandas as pd
-import numpy as np
 import os
 import random
 import string
-import time
-import subprocess
 import secrets
 
-from config import GENERATE_PASSWORDS
+from config import GENERATE_PASSWORDS, MEMORY_LIMIT, PIDS_LIMIT
 
 
 def generate_password(length):
@@ -25,7 +22,9 @@ def generate_password(length):
     return password
 
 
-df = pd.read_csv('users_with_passwords.csv')
+os.system("docker network create --subnet=172.19.0.0/16 --opt com.docker.network.bridge.name=imain_network main_network");
+
+df = pd.read_csv('users_with_passwords.csv', index_col=False)
 for index, row in df.iterrows():
     if GENERATE_PASSWORDS:
         default_password = generate_password(12)
@@ -34,8 +33,8 @@ for index, row in df.iterrows():
 
     username = row['username']
     start, end = (index + 1) * 1000 + 1, (index + 1) * 1000 + 999
-
-    cmd = f"docker run --name {username} --memory=20g --pids-limit 5000 -dti -p {(index + 1) * 1000}:22 -v /home/dockers/{username}:/home/{username} template_ubuntu"
+    
+    cmd = f"docker run --name {username} --memory={MEMORY_LIMIT}g --pids-limit {PIDS_LIMIT} -dti -p {(index + 1) * 1000}:22 -v /home/dockers/{username}:/home/{username} --net main_network --ip 172.19.0.{2 + index} template_ubuntu"
     print(cmd)
     os.system(cmd)
 
@@ -56,5 +55,5 @@ for index, row in df.iterrows():
 
     df.loc[index,'default_password'] = default_password
 
-df.to_csv('users_with_passwords.csv')
+df.to_csv('users_with_passwords.csv', index=False)
 
