@@ -130,3 +130,4 @@ dmypy.json
 
 users_with_passwords.csv
 .oh-my-zsh
+config.py
