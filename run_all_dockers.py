@@ -6,7 +6,7 @@ import string
 import secrets
 import subprocess
 
-from config import GENERATE_PASSWORDS, MEMORY_LIMIT, PIDS_LIMIT
+from config import GENERATE_PASSWORDS, MEMORY_LIMIT, PIDS_LIMIT, IP_PREFIX
 
 
 def generate_password(length):
@@ -23,7 +23,7 @@ def generate_password(length):
     return password
 
 
-os.system("docker network create --subnet=172.19.0.0/16 --opt com.docker.network.bridge.name=imain_network main_network");
+os.system(f"docker network create --subnet={IP_PREFIX}.0/16 --opt com.docker.network.bridge.name=imain_network main_network");
 print()
 
 df = pd.read_csv('users.csv', index_col=False)
