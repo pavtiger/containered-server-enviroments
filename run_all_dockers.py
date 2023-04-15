@@ -41,7 +41,7 @@ for index, row in df.iterrows():
     username = row['username']
     start, end = (index + 1) * 1000 + 1, (index + 1) * 1000 + 999
     
-    cmd = f"docker run --name {username} --hostname london-silaeder-server --memory={MEMORY_LIMIT}g --pids-limit {PIDS_LIMIT} -dti -p {(index + 1) * 1000}:22 -v /home/dockers/{username}:/home/{username} --net main_network --ip 172.19.0.{2 + index} template_ubuntu"
+    cmd = f"docker run --privileged --name {username} --hostname london-silaeder-server --memory={MEMORY_LIMIT}g --pids-limit {PIDS_LIMIT} -dti -p {(index + 1) * 1000}:22 -v /home/dockers/{username}:/home/{username} --net main_network --ip 172.19.0.{2 + index} template_ubuntu"
     print("Docker run command:", cmd)
     os.system(cmd)
 
