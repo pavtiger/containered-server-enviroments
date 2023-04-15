@@ -1,4 +1,8 @@
-FROM ubuntu:22.04
+FROM cruizba/ubuntu-dind
+
+ENV TZ=Europe/Moscow
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 RUN apt update && apt install openssh-server wget curl vim git htop python3 python3-pip iproute2 zsh byobu sudo -y
 
 RUN echo "PermitRootLogin no" >> /etc/ssh/sshd_config
