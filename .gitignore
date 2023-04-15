@@ -128,6 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-users_with_passwords.csv
+# Custom
+users.csv
 .oh-my-zsh
+.idea/
 config.py
+
