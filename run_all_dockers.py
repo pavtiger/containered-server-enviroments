@@ -4,6 +4,7 @@ import os
 import random
 import string
 import secrets
+import subprocess
 
 from config import GENERATE_PASSWORDS, MEMORY_LIMIT, PIDS_LIMIT
 
@@ -25,8 +26,13 @@ def generate_password(length):
 os.system("docker network create --subnet=172.19.0.0/16 --opt com.docker.network.bridge.name=imain_network main_network");
 print()
 
-df = pd.read_csv('users_with_passwords.csv', index_col=False)
+df = pd.read_csv('users.csv', index_col=False)
 for index, row in df.iterrows():
+    stdout = subprocess.check_output(['docker', 'ps', '-a', '--format', '"{{.Names}}"'])
+    existing_containers = stdout.decode('UTF-8').replace('"', '').split('\n')
+    if row['username'] in existing_containers:
+        continue  # Skip container creation
+
     if GENERATE_PASSWORDS:
         default_password = generate_password(12)
     else:
@@ -64,5 +70,5 @@ for index, row in df.iterrows():
     df.loc[index,'default_password'] = default_password
     print()  # Newline
 
-df.to_csv('users_with_passwords.csv', index=False)
+df.to_csv('users.csv', index=False)
 
