@@ -6,7 +6,7 @@ import string
 import secrets
 import subprocess
 
-from config import GENERATE_PASSWORDS, MEMORY_LIMIT, PIDS_LIMIT, IP_PREFIX
+from config import MEMORY_LIMIT, PIDS_LIMIT, IP_PREFIX
 
 
 def generate_password(length):
@@ -33,7 +33,7 @@ for index, row in df.iterrows():
     if row['username'] in existing_containers:
         continue  # Skip container creation
 
-    if GENERATE_PASSWORDS:
+    if not isinstance(row['default_password'], str):
         default_password = generate_password(12)
     else:
         default_password = row['default_password']
