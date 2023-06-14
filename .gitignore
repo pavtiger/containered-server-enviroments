@@ -133,4 +133,5 @@ users.csv
 .oh-my-zsh
 .idea/
 config.py
+backup/
 
