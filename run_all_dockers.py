@@ -31,6 +31,7 @@ for index, row in df.iterrows():
     stdout = subprocess.check_output(['docker', 'ps', '-a', '--format', '"{{.Names}}"'])
     existing_containers = stdout.decode('UTF-8').replace('"', '').split('\n')
     if row['username'] in existing_containers:
+        print(f"Skipping user {row['username']} because there is already a container")
         continue  # Skip container creation
 
     if not isinstance(row['default_password'], str):
