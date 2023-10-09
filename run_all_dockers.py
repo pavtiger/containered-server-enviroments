@@ -5,8 +5,14 @@ import random
 import string
 import secrets
 import subprocess
+import argparse
 
 from config import MEMORY_LIMIT, PIDS_LIMIT, IP_PREFIX
+
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--import", required=False, help="Path to input folder with .tar files (generated using `export_dockers.py`)", default="")
+args = vars(ap.parse_args())
 
 
 def generate_password(length):
@@ -42,7 +48,14 @@ for index, row in df.iterrows():
     username = row['username']
     start, end = (index + 1) * 1000 + 1, (index + 1) * 1000 + 999
     
-    cmd = f"docker run --privileged --name {username} --hostname london-silaeder-server --memory={MEMORY_LIMIT}g --pids-limit {PIDS_LIMIT} -dti -p {(index + 1) * 1000}:22 -v /home/dockers/{username}:/home/{username} --net main_network --ip 172.19.0.{2 + index} template_ubuntu"
+    if args["import"] == "":
+        image_name = "template_ubuntu"
+    else:
+        image_name = row['username'] + "_image:latest"
+        os.system(f"docker image rm {image_name}")
+        os.system(f"docker import --change 'CMD [\"/usr/sbin/sshd\",\"-D\"]' {os.path.join(args['import'], row['username'] + '.tar')} {image_name}")
+
+    cmd = f"docker run --privileged --name {username} --hostname london-silaeder-server --memory={MEMORY_LIMIT}g --pids-limit {PIDS_LIMIT} -dti -p {(index + 1) * 1000}:22 -v /home/dockers/{username}:/home/{username} --net main_network --ip {IP_PREFIX}.{2 + index} {image_name}"
     print("Docker run command:", cmd)
     os.system(cmd)
 
