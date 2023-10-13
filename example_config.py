@@ -1,6 +1,8 @@
 MEMORY_LIMIT = 20  # In gigabytes
 PIDS_LIMIT = 5000
 IP_PREFIX = "172.19.0"
+PORTS_PER_USER = 100
+STARTING_PORT = 10000
 NETWORK_NAME = "imain_network"
 DEBUG_MODE = False
 BACKUP_DIR = "backup/"

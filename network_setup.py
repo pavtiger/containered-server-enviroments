@@ -6,13 +6,13 @@ import random
 import string
 import subprocess
 
-from config import IP_PREFIX, NETWORK_NAME, DEBUG_MODE
+from config import IP_PREFIX, NETWORK_NAME, DEBUG_MODE, PORTS_PER_USER, STARTING_PORT
 
 
 df = pd.read_csv('users.csv')
 for index, row in df.iterrows():
     username = row['username']
-    start, end = (index + 1) * 1000 + 1, (index + 1) * 1000 + 999
+    start, end = STARTING_PORT + index * PORTS_PER_USER + 1, STARTING_PORT + (index + 1) * PORTS_PER_USER - 1  # [start, end]
  
     docker_ip = f"{IP_PREFIX}.{2 + index}"
     print(docker_ip)

@@ -7,11 +7,12 @@ import secrets
 import subprocess
 import argparse
 
-from config import MEMORY_LIMIT, PIDS_LIMIT, IP_PREFIX
+from config import MEMORY_LIMIT, PIDS_LIMIT, IP_PREFIX, PORTS_PER_USER, STARTING_PORT
 
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--import", required=False, help="Path to input folder with .tar files (generated using `export_dockers.py`)", default="")
+ap.add_argument("-f", "--force", help="Create new container even if one already exists", action='store_true')
 args = vars(ap.parse_args())
 
 
@@ -37,8 +38,12 @@ for index, row in df.iterrows():
     stdout = subprocess.check_output(['docker', 'ps', '-a', '--format', '"{{.Names}}"'])
     existing_containers = stdout.decode('UTF-8').replace('"', '').split('\n')
     if row['username'] in existing_containers:
-        print(f"Skipping user {row['username']} because there is already a container")
-        continue  # Skip container creation
+        if args["force"]:
+            os.system(f"docker stop {row['username']}")
+            os.system(f"docker rm {row['username']}")
+        else:
+            print(f"Skipping user {row['username']} because there is already a container")
+            continue  # Skip container creation
 
     if not isinstance(row['default_password'], str):
         default_password = generate_password(12)
@@ -46,8 +51,8 @@ for index, row in df.iterrows():
         default_password = row['default_password']
 
     username = row['username']
-    start, end = (index + 1) * 1000 + 1, (index + 1) * 1000 + 999
-    
+    start, end = STARTING_PORT + index * PORTS_PER_USER + 1, STARTING_PORT + (index + 1) * PORTS_PER_USER - 1  # [start, end]
+
     if args["import"] == "":
         image_name = "template_ubuntu"
     else:
@@ -55,7 +60,7 @@ for index, row in df.iterrows():
         os.system(f"docker image rm {image_name}")
         os.system(f"docker import --change 'CMD [\"/usr/sbin/sshd\",\"-D\"]' {os.path.join(args['import'], row['username'] + '.tar')} {image_name}")
 
-    cmd = f"docker run --privileged --name {username} --hostname london-silaeder-server --memory={MEMORY_LIMIT}g --pids-limit {PIDS_LIMIT} -dti -p {(index + 1) * 1000}:22 -v /home/dockers/{username}:/home/{username} --net main_network --ip {IP_PREFIX}.{2 + index} {image_name}"
+    cmd = f"docker run --privileged --name {username} --hostname london-silaeder-server --memory={MEMORY_LIMIT}g --pids-limit {PIDS_LIMIT} -dti -p {STARTING_PORT + index * PORTS_PER_USER}:22 -v /home/dockers/{username}:/home/{username} --net main_network --ip {IP_PREFIX}.{2 + index} {image_name}"
     print("Docker run command:", cmd)
     os.system(cmd)
 
@@ -78,8 +83,9 @@ for index, row in df.iterrows():
             f"docker exec {username} /bin/sh -c 'chsh -s $(which zsh) {username}'",  # Change default shell to zsh
             ]
 
-    for command in commands:
-        os.system(command)
+    if args["import"] == "":
+        for command in commands:
+            os.system(command)
 
     df.loc[index,'default_password'] = default_password
     print()  # Newline
