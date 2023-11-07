@@ -34,6 +34,7 @@ os.system(f"docker network create --subnet={IP_PREFIX}.0/16 --opt com.docker.net
 print()
 
 df = pd.read_csv('users.csv', index_col=False)
+df = df.dropna(subset=["username"])
 for index, row in df.iterrows():
     stdout = subprocess.check_output(['docker', 'ps', '-a', '--format', '"{{.Names}}"'])
     existing_containers = stdout.decode('UTF-8').replace('"', '').split('\n')
@@ -81,6 +82,7 @@ for index, row in df.iterrows():
             f"docker exec {username} /bin/sh -c \"echo 'alias python=\\\"python3\\\"' >> /home/{username}/.zshrc\"",
 
             f"docker exec {username} /bin/sh -c 'chsh -s $(which zsh) {username}'",  # Change default shell to zsh
+            f"docker exec {username} /bin/sh -c 'chmod 666 /var/run/docker.sock'",
             ]
 
     if args["import"] == "":
