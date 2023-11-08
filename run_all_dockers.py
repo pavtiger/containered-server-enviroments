@@ -6,6 +6,7 @@ import string
 import secrets
 import subprocess
 import argparse
+import json
 
 from config import MEMORY_LIMIT, PIDS_LIMIT, IP_PREFIX, PORTS_PER_USER, STARTING_PORT
 
@@ -36,14 +37,27 @@ print()
 df = pd.read_csv('users.csv', index_col=False)
 df = df.dropna(subset=["username"])
 for index, row in df.iterrows():
-    stdout = subprocess.check_output(['docker', 'ps', '-a', '--format', '"{{.Names}}"'])
-    existing_containers = stdout.decode('UTF-8').replace('"', '').split('\n')
-    if row['username'] in existing_containers:
+    lines = subprocess.check_output(['docker', 'ps', '-a', '--format', 'json']).decode('UTF-8').split('\n')
+
+    containers_info = dict()
+    for line in lines:
+        if line != "":
+            json_docker = json.loads(line)
+            containers_info[json_docker["Names"]] = json_docker
+
+
+    if row['username'] in containers_info:
         if args["force"]:
             os.system(f"docker stop {row['username']}")
             os.system(f"docker rm {row['username']}")
         else:
             print(f"Skipping user {row['username']} because there is already a container")
+            status =  containers_info[row["username"]]["Status"].split()[0]
+            if status == "Exited":
+                print(f"Starting container for user {row['username']}")
+                os.system(f"docker start {row['username']}")
+
+
             continue  # Skip container creation
 
     if not isinstance(row['default_password'], str):
@@ -61,7 +75,7 @@ for index, row in df.iterrows():
         os.system(f"docker image rm {image_name}")
         os.system(f"docker import --change 'CMD [\"/usr/sbin/sshd\",\"-D\"]' {os.path.join(args['import'], row['username'] + '.tar')} {image_name}")
 
-    cmd = f"docker run --privileged --name {username} --hostname london-silaeder-server --memory={MEMORY_LIMIT}g --pids-limit {PIDS_LIMIT} -dti -p {STARTING_PORT + index * PORTS_PER_USER}:22 -v /home/dockers/{username}:/home/{username} --net main_network --ip {IP_PREFIX}.{2 + index} {image_name}"
+    cmd = f"docker run --privileged --name {username} --hostname london-silaeder-server --restart always --memory={MEMORY_LIMIT}g --pids-limit {PIDS_LIMIT} -dti -p {STARTING_PORT + index * PORTS_PER_USER}:22 -v /home/dockers/{username}:/home/{username} --net main_network --ip {IP_PREFIX}.{2 + index} {image_name}"
     print("Docker run command:", cmd)
     os.system(cmd)
 

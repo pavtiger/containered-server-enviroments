@@ -134,4 +134,5 @@ users.csv
 .idea/
 config.py
 backup/
+exports/
 
